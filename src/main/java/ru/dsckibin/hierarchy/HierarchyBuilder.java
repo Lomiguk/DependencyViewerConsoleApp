@@ -7,8 +7,7 @@ import org.objectweb.asm.tree.ClassNode;
 import org.objectweb.asm.tree.InvokeDynamicInsnNode;
 import org.objectweb.asm.tree.MethodInsnNode;
 import org.objectweb.asm.tree.TypeInsnNode;
-import ru.dsckibin.util.FileNameUtil;
-import ru.dsckibin.util.asm.ClassNameUtil;
+import ru.dsckibin.util.ClassNameUtil;
 import ru.dsckibin.util.jar.JarMaster;
 
 import java.util.Collection;
@@ -23,15 +22,12 @@ public class HierarchyBuilder {
 
     private final JarMaster jarMaster;
     private final ClassNameUtil classNameUtil;
-    private final FileNameUtil fileNameUtil;
 
     public HierarchyBuilder(
             JarMaster jarMaster,
-            ClassNameUtil classNameUtil,
-            FileNameUtil fileNameUtil) {
+            ClassNameUtil classNameUtil) {
         this.jarMaster = jarMaster;
         this.classNameUtil = classNameUtil;
-        this.fileNameUtil = fileNameUtil;
     }
 
     public Set<Node> build(String jarPath, List<String> diff) {
@@ -69,36 +65,36 @@ public class HierarchyBuilder {
         return classNode;
     }
 
-    private Map<DependencyNode, Integer> getJarClassFieldsAsDependencyNodes(ClassNode parentNode) {
-        var result = new HashMap<DependencyNode, Integer>();
+    private Map<String, Dependency> getJarClassFieldsAsDependencyNodes(ClassNode parentNode) {
+        var result = new HashMap<String, Dependency>();
         parentNode.fields.forEach(fieldNode ->
-                addDependencyNode(result, fieldNode.desc, TypeOfDependency.FIELD)
+                addDependency(result, fieldNode.desc, TypeOfDependency.FIELD)
         );
         return result;
     }
 
-    private Map<DependencyNode, Integer> getJarClassMethodDependenciesAsDependencyNodes(ClassNode parentNode) {
-        var result = new HashMap<DependencyNode, Integer>();
+    private Map<String, Dependency> getJarClassMethodDependenciesAsDependencyNodes(ClassNode parentNode) {
+        var result = new HashMap<String, Dependency>();
         parentNode.methods.forEach(methodNode -> {
             var params = Type.getArgumentTypes(methodNode.desc);
             for (var param : params) {
-                addDependencyNode(result, param.getClassName(), TypeOfDependency.METHOD_PARAM);
+                addDependency(result, param.getClassName(), TypeOfDependency.METHOD_PARAM);
             }
 
             methodNode.instructions.forEach(instruction -> {
                         switch (instruction.getOpcode()) {
-                            case Opcodes.NEW -> addDependencyNode(
+                            case Opcodes.NEW -> addDependency(
                                     result,
                                     ((TypeInsnNode) instruction).desc,
                                     TypeOfDependency.NEW
                             );
                             case Opcodes.INVOKEINTERFACE, Opcodes.INVOKESPECIAL, Opcodes.INVOKESTATIC, Opcodes.INVOKEVIRTUAL ->
-                                    addDependencyNode(
+                                    addDependency(
                                             result,
                                             ((MethodInsnNode) instruction).owner,
                                             TypeOfDependency.INVOKE
                                     );
-                            case Opcodes.INVOKEDYNAMIC -> addDependencyNode(
+                            case Opcodes.INVOKEDYNAMIC -> addDependency(
                                     result,
                                     ((InvokeDynamicInsnNode) instruction).bsm.getOwner(),
                                     TypeOfDependency.INVOKE
@@ -110,19 +106,23 @@ public class HierarchyBuilder {
         return result;
     }
 
-    private void addDependencyNode(
-            Map<DependencyNode, Integer> dependencies,
+    private void addDependency(
+            Map<String, Dependency> dependencies,
             String name,
             TypeOfDependency typeOfDependency
     ) {
-        var node = new DependencyNode(
-                classNameUtil.prepareClassNameToUse(fileNameUtil.clear(name)),
-                typeOfDependency
-        );
-        if (dependencies.containsKey(node)) {
-            dependencies.put(node, dependencies.get(node) + 1);
+        var preparedName = classNameUtil.prepareClassNameToUse(name);
+        if (dependencies.containsKey(preparedName)) {
+            var dependency = dependencies.get(preparedName);
+            if (dependency.containsKey(typeOfDependency)) {
+                dependency.upWeight(typeOfDependency);
+            } else {
+                dependency.put(typeOfDependency, 1);
+            }
         } else {
-            dependencies.put(node, BASE_COUNT_VALUE);
+            var dependency = new Dependency();
+            dependency.putNew(typeOfDependency);
+            dependencies.put(preparedName, dependency);
         }
     }
 }

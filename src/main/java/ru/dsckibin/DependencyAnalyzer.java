@@ -3,8 +3,7 @@ package ru.dsckibin;
 import ru.dsckibin.hierarchy.HierarchyBuilder;
 import ru.dsckibin.hierarchy.Node;
 import ru.dsckibin.ui.ConsoleUiManager;
-import ru.dsckibin.util.FileNameUtil;
-import ru.dsckibin.util.asm.ClassNameUtil;
+import ru.dsckibin.util.ClassNameUtil;
 import ru.dsckibin.util.git.GitMaster;
 import ru.dsckibin.util.jar.JarMaster;
 import ru.dsckibin.util.vizualization.GraphvizDataMapper;
@@ -18,11 +17,7 @@ public class DependencyAnalyzer {
     private final String jar;
     private final ConsoleUiManager ui = new ConsoleUiManager();
     private final JarMaster jarMaster = new JarMaster();
-    private final HierarchyBuilder hierarchyBuilder = new HierarchyBuilder(
-            jarMaster,
-            new ClassNameUtil(),
-            new FileNameUtil()
-            );
+    private final HierarchyBuilder hierarchyBuilder = new HierarchyBuilder(jarMaster, new ClassNameUtil());
 
     private final GraphvizTool graphvizTool = new GraphvizTool(
             "graph",
@@ -76,12 +71,16 @@ public class DependencyAnalyzer {
     private void jarNodesToConsole(Collection<Node> jarNodes) {
         jarNodes.forEach(it -> {
                     System.out.printf("Class: %s; In git dif - %s%n", it.getName(), it.getChanged());
-                    it.getDependencies().forEach((key, value) -> System.out.printf(
-                            "   dep (%s)[%d]: %s\n",
-                            key.getTypeOfDependency(),
-                            value,
-                            key.getName()
-                    ));
+                    it.getDependencies().forEach((key, value) -> {
+                                System.out.printf(
+                                        "   dep (%s) types: \n",
+                                        key
+                                );
+                                value.forEach((type, weight) -> {
+                                    System.out.printf("    * %s - %d \n", type, weight);
+                                });
+                            }
+                    );
                 }
         );
     }

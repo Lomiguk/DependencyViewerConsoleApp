@@ -36,13 +36,12 @@ public class GraphvizTool {
 
     private void implementEdge(Set<Node> hierarchy) {
         hierarchy.forEach(node -> {
-            node.getDependencies().forEach((depNode, weight) -> {
+            node.getDependencies().forEach((className, dependency) -> {
                 stringBuilder.append(
-                        dataMapper.mapDependencyToEdgeString(node, depNode, weight)
+                        dataMapper.mapDependencyToEdgeString(node, className, dependency)
                 );
             });
         });
-
     }
 
     private void digraphWrapping() {
