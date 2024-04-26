@@ -47,7 +47,8 @@ public class Node {
         return name.hashCode();
     }
 
-    public void addDependencies(Map<DependencyNode, Integer> newPairs) {
+    public Node addDependencies(Map<DependencyNode, Integer> newPairs) {
         dependencies.putAll(newPairs);
+        return this;
     }
 }

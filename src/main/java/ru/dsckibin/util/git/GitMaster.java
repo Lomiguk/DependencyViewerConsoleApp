@@ -68,6 +68,8 @@ public class GitMaster {
     }
 
     public List<String> getDiff(String branch, String firstHash, String secondHash) {
+
+
         var firstCommit = getCommit(branch, firstHash);
         var secondCommit = getCommit(branch, secondHash);
         var result = new ArrayList<String>();

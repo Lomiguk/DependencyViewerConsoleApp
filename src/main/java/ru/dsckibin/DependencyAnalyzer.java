@@ -3,9 +3,12 @@ package ru.dsckibin;
 import ru.dsckibin.hierarchy.HierarchyBuilder;
 import ru.dsckibin.hierarchy.Node;
 import ru.dsckibin.ui.ConsoleUiManager;
+import ru.dsckibin.util.FileNameUtil;
 import ru.dsckibin.util.asm.ClassNameUtil;
 import ru.dsckibin.util.git.GitMaster;
 import ru.dsckibin.util.jar.JarMaster;
+import ru.dsckibin.util.vizualization.GraphvizDataMapper;
+import ru.dsckibin.util.vizualization.GraphvizTool;
 
 import java.util.Collection;
 
@@ -15,7 +18,17 @@ public class DependencyAnalyzer {
     private final String jar;
     private final ConsoleUiManager ui = new ConsoleUiManager();
     private final JarMaster jarMaster = new JarMaster();
-    private final HierarchyBuilder hierarchyBuilder = new HierarchyBuilder(jarMaster, new ClassNameUtil());
+    private final HierarchyBuilder hierarchyBuilder = new HierarchyBuilder(
+            jarMaster,
+            new ClassNameUtil(),
+            new FileNameUtil()
+            );
+
+    private final GraphvizTool graphvizTool = new GraphvizTool(
+            "graph",
+            new StringBuilder(),
+            new GraphvizDataMapper()
+    );
 
     public DependencyAnalyzer() {
         gitRepo = ui.getGitRepo();
@@ -46,6 +59,7 @@ public class DependencyAnalyzer {
 
     public void start() {
         var branch = ui.select(gitMaster.getBranches());
+
         var diffClasses = gitMaster.getDiff(
                 branch,
                 ui.select(gitMaster.getCommits(branch)).getHash(),
@@ -55,6 +69,8 @@ public class DependencyAnalyzer {
         var jarNodes = hierarchyBuilder.build(jar, diffClasses);
 
         jarNodesToConsole(jarNodes);
+
+        graphvizTool.drawGraph(jarNodes);
     }
 
     private void jarNodesToConsole(Collection<Node> jarNodes) {
