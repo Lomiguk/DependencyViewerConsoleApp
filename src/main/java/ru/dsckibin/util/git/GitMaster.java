@@ -16,10 +16,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class GitMaster {
+    private final static String GIT_EXTENSION = "\\.git";
     private final String gitRepoPath;
 
     public GitMaster(String gitPath) {
-        gitRepoPath = gitPath + "\\.git";
+        gitRepoPath = gitPath + GIT_EXTENSION;
     }
 
     public List<String> getBranches() {
@@ -68,8 +69,6 @@ public class GitMaster {
     }
 
     public List<String> getDiff(String branch, String firstHash, String secondHash) {
-
-
         var firstCommit = getCommit(branch, firstHash);
         var secondCommit = getCommit(branch, secondHash);
         var result = new ArrayList<String>();

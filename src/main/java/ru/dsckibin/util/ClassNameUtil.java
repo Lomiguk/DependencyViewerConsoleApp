@@ -5,6 +5,7 @@ import ru.dsckibin.util.asm.Primitive;
 import java.util.ArrayList;
 
 public class ClassNameUtil {
+    private static final String CLASS_EXTENSION = ".class";
     private static final String OBJECT_MARKER_PREFIX = "L";
     private static final String OBJECT_MARKER_POSTFIX = ";";
     private static final String CLASS_PATH_SPLITTER = "/";
@@ -12,36 +13,37 @@ public class ClassNameUtil {
     private static final String ARRAY_START_MARKER = "[";
     private static final char ARRAY_START_CHAR_MARKER = '[';
     private static final String ARRAY_END_MARKER = ";";
+    private static final String SUBCLASS_MARKER = "$";
     private static final String NEW_ARRAY_MARKER = "[]";
-    private static final int OBJECT_NAME_START_POSITION = 1;
     private static final int OPTIMAL_LENGTH = 15;
 
     public String prepareClassNameToUse(String className) {
-        if (className.endsWith(".class")) {
-            className = className.substring(0, className.length()-6);
+        var preparedName = className;
+
+        if (preparedName.endsWith(CLASS_EXTENSION)) {
+            preparedName = preparedName.substring(0, preparedName.length()-6);
+        }
+        if (preparedName.startsWith(ARRAY_START_MARKER)) {
+            preparedName = prepareArray(preparedName);
+        }
+        if (preparedName.startsWith(OBJECT_MARKER_PREFIX)) {
+            preparedName = prepareObject(preparedName);
+        } else if (Primitive.enumSet().contains(preparedName)) {
+            preparedName = Primitive.valueOf(preparedName).TYPE_NAME;
+        }
+        if (preparedName.contains(SUBCLASS_MARKER)) {
+            preparedName = preparedName.substring(0, preparedName.indexOf(SUBCLASS_MARKER)-1);
         }
 
-        if (className.startsWith(OBJECT_MARKER_PREFIX) && className.endsWith(OBJECT_MARKER_POSTFIX)) {
-            return simplifyName(className.substring(OBJECT_NAME_START_POSITION, className.length()-1));
-        }
-
-        if (Primitive.enumSet().contains(className)) {
-            return simplifyName(Primitive.valueOf(className).TYPE_NAME);
-        }
-
-        if (className.startsWith(OBJECT_MARKER_PREFIX) && className.endsWith(OBJECT_MARKER_POSTFIX)) {
-            return simplifyName(prepareObject(className));
-        }
-
-        if (className.startsWith(ARRAY_START_MARKER)) {
-            return simplifyName(prepareArray(className));
-        }
-
-        return simplifyName(className);
+        return preparedName.replace(CLASS_PATH_SPLITTER, DOT_CLASS_PATH_SPLITTER);
     }
 
     private String prepareObject(String className) {
-        return className.substring(1, className.length()-1);
+        if (className.endsWith(OBJECT_MARKER_POSTFIX)) {
+            return className.substring(1, className.length()-1);
+        } else {
+            return className.substring(1);
+        }
     }
 
     private String prepareArray(String className) {

@@ -2,49 +2,63 @@ package ru.dsckibin.util.vizualization;
 
 import ru.dsckibin.hierarchy.Dependency;
 import ru.dsckibin.hierarchy.Node;
+import ru.dsckibin.util.ClassNameUtil;
 
 import java.util.stream.Collectors;
 
 public class GraphvizDataMapper {
-    private final static String EDGE_FORMAT = "   \"%s\" -> \"%s\"\n";
-    private final static String SETTINGS_START = " [";
-    private final static String SETTINGS_END = "]\n";
+    private final static String EDGE_CLUSTER_FORMAT = """
+            { edge [%s %s]
+                "%s" -> "%s"
+            }
+            """;
     private final static String COLOR_SETTING_FORMAT = "color = \"%s\"";
     private final static String FIELD_COLOR = "#0000ff";
     private final static String INVOKE_COLOR = "#ff0000";
     private final static String NEW_COLOR = "#00ff00";
     private final static String METHOD_PARAM_COLOR = "#000000";
+    private final static String JAR_CLASS_COLOR = "#ff0000";
     private final static String LABEL_SETTING_FORMAT = "label = \"%s\"";
+    private final static String DEPENDENCY_COUNT_FORMAT = "%d;%d;%d;%d";
+    private final static String JAR_CLASS_FORMAT = "\"%s\" [color = \"%s\"]\n";
+    private final static String COLOR_SPLITTER = ":";
+    private final static String EMPTY_STRING = "";
 
-    /*public String mapDependencyToEdgeString(
-            Node parent,
-            DependencyNode dependencyNode,
-            Integer weight
+    private final ClassNameUtil classNameUtil;
+
+    public GraphvizDataMapper(ClassNameUtil classNameUtil) {
+        this.classNameUtil = classNameUtil;
+    }
+
+
+    public String mapDependencyToEdgeString(
+            Node node,
+            String depName,
+            Dependency dependency,
+            Boolean simplifyNames
     ) {
-        StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append(String.format(EDGE_FORMAT + SETTINGS_START, parent.getName(), dependencyNode.getName()));
-        switch (dependencyNode.getTypeOfDependency()) {
-            case FIELD -> stringBuilder.append(COLOR_SETTING + FIELD_COLOR);
-            case INVOKE -> stringBuilder.append(COLOR_SETTING + INVOKE_COLOR);
-            case NEW -> stringBuilder.append(COLOR_SETTING + NEW_COLOR);
-            case METHOD_PARAM -> stringBuilder.append(COLOR_SETTING + METHOD_PARAM_COLOR);
-        }
-        stringBuilder.append(String.format(LABEL_SETTING_FORMAT, weight));
-        stringBuilder.append(SETTINGS_END);
-
-        return stringBuilder.toString();
-    }*/
-
-    public String mapDependencyToEdgeString(Node node, String depName, Dependency dependency) {
         var stringBuilder = new StringBuilder();
         if (dependency.isEmpty()) {
             return stringBuilder.toString();
         }
 
-        stringBuilder.append(String.format("{ edge [%s %s]\n", buildColorProperty(dependency), buildLabelProperty(dependency)));
-        stringBuilder.append(String.format(EDGE_FORMAT, node.getName(), depName));
-        stringBuilder.append("}\n");
+        stringBuilder.append(getEdgeClusterStart(
+                dependency,
+                simplifyNames ? classNameUtil.simplifyName(node.getName()) : node.getName(),
+                simplifyNames ? classNameUtil.simplifyName(depName) : depName
+        ));
+
         return stringBuilder.toString();
+    }
+
+    private String getEdgeClusterStart(Dependency dependency, String nodeName, String depName) {
+        return String.format(
+                EDGE_CLUSTER_FORMAT,
+                buildColorProperty(dependency),
+                buildLabelProperty(dependency),
+                nodeName,
+                depName
+        );
     }
 
     private String buildColorProperty(Dependency dependency) {
@@ -56,7 +70,7 @@ public class GraphvizDataMapper {
     }
 
     private String dependenciesToColors(Dependency dependency) {
-        return String.join(":", dependency.keySet().stream()
+        return String.join(COLOR_SPLITTER, dependency.keySet().stream()
                 .map(key -> {
                     String color;
                     switch (key) {
@@ -64,7 +78,7 @@ public class GraphvizDataMapper {
                         case INVOKE -> color = INVOKE_COLOR;
                         case FIELD -> color = FIELD_COLOR;
                         case METHOD_PARAM -> color = METHOD_PARAM_COLOR;
-                        default -> color = "";
+                        default -> color = EMPTY_STRING;
                     }
                     return color;
                 })
@@ -84,6 +98,14 @@ public class GraphvizDataMapper {
         });
 
         return depCount.toString();
+    }
+
+    public String mapJarClass(Node node, Boolean simplifyName) {
+        return String.format(
+                JAR_CLASS_FORMAT,
+                simplifyName ? classNameUtil.simplifyName(node.getName()) : node.getName(),
+                JAR_CLASS_COLOR
+        );
     }
 
     private static class DepCount {
@@ -108,7 +130,7 @@ public class GraphvizDataMapper {
         }
         @Override
         public String toString() {
-            return String.format("%d;%d;%d;%d", newDep, invokeDep, fieldDep, methodDep);
+            return String.format(DEPENDENCY_COUNT_FORMAT, newDep, invokeDep, fieldDep, methodDep);
         }
     }
 }

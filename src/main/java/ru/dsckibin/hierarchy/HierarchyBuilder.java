@@ -18,7 +18,7 @@ import java.util.Map;
 import java.util.Set;
 
 public class HierarchyBuilder {
-    private final static int BASE_COUNT_VALUE = 1;
+    private final static boolean DEFAULT_CHANGED_STATUS = true;
 
     private final JarMaster jarMaster;
     private final ClassNameUtil classNameUtil;
@@ -30,7 +30,10 @@ public class HierarchyBuilder {
         this.classNameUtil = classNameUtil;
     }
 
-    public Set<Node> build(String jarPath, List<String> diff) {
+    public Set<Node> build(
+            String jarPath,
+            List<String> diff
+    ) {
         var result = new HashSet<Node>();
         jarMaster.getClassesAsByteArray(jarPath).forEach((name, bytes) -> {
             var byteNode = bytesToAsmClassNode(bytes);
@@ -47,11 +50,30 @@ public class HierarchyBuilder {
         return result;
     }
 
+    public Set<Node> build(
+            String jarPath
+    ) {
+        var result = new HashSet<Node>();
+        jarMaster.getClassesAsByteArray(jarPath).forEach((name, bytes) -> {
+            var byteNode = bytesToAsmClassNode(bytes);
+            var jarNode = new Node(
+                    classNameUtil.prepareClassNameToUse(name),
+                    DEFAULT_CHANGED_STATUS
+            );
+            jarNode
+                    .addDependencies(getJarClassFieldsAsDependencyNodes(byteNode))
+                    .addDependencies(getJarClassMethodDependenciesAsDependencyNodes(byteNode));
+
+            result.add(jarNode);
+        });
+        return result;
+    }
+
     private Boolean checkDiffsForContains(Collection<String> diffs, String sourceFile) {
         for (var elem : diffs) {
-            if (elem.endsWith(sourceFile)) return false;
+            if (elem.endsWith(sourceFile)) return true;
         }
-        return true;
+        return false;
     }
 
     private ClassNode bytesToAsmClassNode(byte[] bytes) {

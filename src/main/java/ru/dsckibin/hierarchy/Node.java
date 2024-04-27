@@ -17,7 +17,7 @@ public class Node {
         return name;
     }
 
-    public Boolean getChanged() {
+    public Boolean getChangedStatus() {
         return isChanged;
     }
 
