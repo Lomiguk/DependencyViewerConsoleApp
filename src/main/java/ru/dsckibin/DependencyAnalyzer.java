@@ -56,7 +56,12 @@ public class DependencyAnalyzer {
     }
 
     private String getJarFile(String directory) {
-        return ui.select(jarMaster.searchJar(directory), "jar files");
+        var jars = jarMaster.searchJar(directory);
+        if (jars.size() > 1) {
+            return ui.select(jarMaster.searchJar(directory), "jar files");
+        } else {
+            return jars.get(0);
+        }
     }
 
     public void start(
@@ -64,12 +69,8 @@ public class DependencyAnalyzer {
             Boolean useIgnoreFile,
             Boolean simplifyNames
     ) {
-        List<String> ignoredClasses;
-        if (useIgnoreFile) {
-           ignoredClasses = ignoreUtil.getIgnoredNamesFrom("dependecy_class.ignore");
-        } else {
-           ignoredClasses = new ArrayList<>();
-        }
+        List<String> ignoredClasses = getIgnoredNames(useIgnoreFile);
+
         Set<Node> jarNodes;
         if (useGitDiff) {
             var branch = ui.select(gitMaster.getBranches());
@@ -90,6 +91,14 @@ public class DependencyAnalyzer {
                 ignoredClasses,
                 simplifyNames
         );
+    }
+
+    private List<String> getIgnoredNames(Boolean useIgnoreFile) {
+        if (useIgnoreFile) {
+            return ignoreUtil.getIgnoredNamesFrom("dependency_class.ignore");
+        } else {
+            return new ArrayList<>();
+        }
     }
 
     private List<String> getChangedClasses(String branch) {

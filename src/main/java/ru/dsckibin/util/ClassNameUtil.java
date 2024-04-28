@@ -18,24 +18,36 @@ public class ClassNameUtil {
     private static final int OPTIMAL_LENGTH = 15;
 
     public String prepareClassNameToUse(String className) {
-        var preparedName = className;
+        return changeNameSplitter(removeClassExtension(className));
+    }
 
-        if (preparedName.endsWith(CLASS_EXTENSION)) {
-            preparedName = preparedName.substring(0, preparedName.length()-6);
+    private String removeClassExtension(String name) {
+        if (name.endsWith(CLASS_EXTENSION)) {
+            return name.substring(0, name.length()-6);
         }
-        if (preparedName.startsWith(ARRAY_START_MARKER)) {
-            preparedName = prepareArray(preparedName);
+        return name;
+    }
+
+    public String prepareAsmName(String name) {
+        var result = name;
+
+        if (result.startsWith(ARRAY_START_MARKER)) {
+            result = prepareArray(result);
         }
-        if (preparedName.startsWith(OBJECT_MARKER_PREFIX)) {
-            preparedName = prepareObject(preparedName);
-        } else if (Primitive.enumSet().contains(preparedName)) {
-            preparedName = Primitive.valueOf(preparedName).TYPE_NAME;
+        if (result.startsWith(OBJECT_MARKER_PREFIX)) {
+            result = prepareObject(result);
+        } else if (Primitive.enumSet().contains(result)) {
+            result = Primitive.valueOf(result).TYPE_NAME;
         }
-        if (preparedName.contains(SUBCLASS_MARKER)) {
-            preparedName = preparedName.substring(0, preparedName.indexOf(SUBCLASS_MARKER)-1);
+        if (result.contains(SUBCLASS_MARKER)) {
+            result = result.substring(0, result.indexOf(SUBCLASS_MARKER)-1);
         }
 
-        return preparedName.replace(CLASS_PATH_SPLITTER, DOT_CLASS_PATH_SPLITTER);
+        return changeNameSplitter(result);
+    }
+
+    public String changeNameSplitter(String name) {
+        return name.replace(CLASS_PATH_SPLITTER, DOT_CLASS_PATH_SPLITTER);
     }
 
     private String prepareObject(String className) {

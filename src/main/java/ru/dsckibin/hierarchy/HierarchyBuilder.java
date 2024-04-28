@@ -90,7 +90,11 @@ public class HierarchyBuilder {
     private Map<String, Dependency> getJarClassFieldsAsDependencyNodes(ClassNode parentNode) {
         var result = new HashMap<String, Dependency>();
         parentNode.fields.forEach(fieldNode ->
-                addDependency(result, fieldNode.desc, TypeOfDependency.FIELD)
+                addDependency(
+                        result,
+                        classNameUtil.prepareAsmName(fieldNode.desc),
+                        TypeOfDependency.FIELD
+                )
         );
         return result;
     }
@@ -100,25 +104,29 @@ public class HierarchyBuilder {
         parentNode.methods.forEach(methodNode -> {
             var params = Type.getArgumentTypes(methodNode.desc);
             for (var param : params) {
-                addDependency(result, param.getClassName(), TypeOfDependency.METHOD_PARAM);
+                addDependency(
+                        result,
+                        classNameUtil.changeNameSplitter(param.getClassName()),
+                        TypeOfDependency.METHOD_PARAM
+                );
             }
 
             methodNode.instructions.forEach(instruction -> {
                         switch (instruction.getOpcode()) {
                             case Opcodes.NEW -> addDependency(
                                     result,
-                                    ((TypeInsnNode) instruction).desc,
+                                    classNameUtil.changeNameSplitter(((TypeInsnNode) instruction).desc),
                                     TypeOfDependency.NEW
                             );
                             case Opcodes.INVOKEINTERFACE, Opcodes.INVOKESPECIAL, Opcodes.INVOKESTATIC, Opcodes.INVOKEVIRTUAL ->
                                     addDependency(
                                             result,
-                                            ((MethodInsnNode) instruction).owner,
+                                            classNameUtil.changeNameSplitter(((MethodInsnNode) instruction).owner),
                                             TypeOfDependency.INVOKE
                                     );
                             case Opcodes.INVOKEDYNAMIC -> addDependency(
                                     result,
-                                    ((InvokeDynamicInsnNode) instruction).bsm.getOwner(),
+                                    classNameUtil.changeNameSplitter(((InvokeDynamicInsnNode) instruction).bsm.getOwner()),
                                     TypeOfDependency.INVOKE
                             );
                         }
@@ -133,9 +141,8 @@ public class HierarchyBuilder {
             String name,
             TypeOfDependency typeOfDependency
     ) {
-        var preparedName = classNameUtil.prepareClassNameToUse(name);
-        if (dependencies.containsKey(preparedName)) {
-            var dependency = dependencies.get(preparedName);
+        if (dependencies.containsKey(name)) {
+            var dependency = dependencies.get(name);
             if (dependency.containsKey(typeOfDependency)) {
                 dependency.upWeight(typeOfDependency);
             } else {
@@ -144,7 +151,7 @@ public class HierarchyBuilder {
         } else {
             var dependency = new Dependency();
             dependency.putNew(typeOfDependency);
-            dependencies.put(preparedName, dependency);
+            dependencies.put(name, dependency);
         }
     }
 }
