@@ -1,7 +1,7 @@
 package ru.dsckibin.util.vizualization;
 
+import ru.dsckibin.hierarchy.GitView;
 import ru.dsckibin.hierarchy.Node;
-import ru.dsckibin.util.ClassNameUtil;
 
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -13,19 +13,16 @@ public class GraphvizTool {
     private final String filePrefix;
     private final StringBuilder stringBuilder;
     private final GraphvizDataMapper dataMapper;
-    private final ClassNameUtil classNameUtil;
 
 
     public GraphvizTool(
             String filePrefix,
             StringBuilder stringBuilder,
-            GraphvizDataMapper dataMapper,
-            ClassNameUtil classNameUtil
+            GraphvizDataMapper dataMapper
     ) {
         this.filePrefix = filePrefix;
         this.stringBuilder = stringBuilder;
         this.dataMapper = dataMapper;
-        this.classNameUtil = classNameUtil;
     }
 
     public void drawGraph(
@@ -52,7 +49,8 @@ public class GraphvizTool {
     ) {
         for (var node : hierarchy) {
             if (isIgnored(ignoredNames, node.getName())) continue;
-            if ((!useGitDif || node.getChangedStatus())) {
+            var gitStatus = node.getGitView();
+            if (!useGitDif || gitStatus.equals(GitView.CHANGED) || gitStatus.equals(GitView.INTERVAL)) {
                 stringBuilder.append(
                         dataMapper.mapJarClass(node, simplifyNames)
                 );
@@ -70,9 +68,6 @@ public class GraphvizTool {
                 });
             }
         }
-        hierarchy.forEach(node -> {
-
-        });
     }
 
     private Boolean isIgnored(Collection<String> ignoredName, String name) {
@@ -80,7 +75,7 @@ public class GraphvizTool {
             if (bannedClass.startsWith("*") && name.endsWith(bannedClass.substring(1))) {
                 return true;
             }
-            if (bannedClass.endsWith("*") && name.startsWith(bannedClass.substring(0, bannedClass.length()-1))) {
+            if (bannedClass.endsWith("*") && name.startsWith(bannedClass.substring(0, bannedClass.length() - 1))) {
                 return true;
             }
             if (bannedClass.equals(name)) {

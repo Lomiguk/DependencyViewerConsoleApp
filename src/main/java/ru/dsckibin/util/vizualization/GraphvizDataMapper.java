@@ -18,6 +18,9 @@ public class GraphvizDataMapper {
     private final static String NEW_COLOR = "#00ff00";
     private final static String METHOD_PARAM_COLOR = "#000000";
     private final static String JAR_CLASS_COLOR = "#ff0000";
+    private final static String CHANGED_CLASS_COLOR = "#ff0000";
+    private final static String NOT_CHANGED_CLASS_COLOR = "#ac49e5";
+    private final static String INTERVAL_CLASS_COLOR = "#ffb600";
     private final static String LABEL_SETTING_FORMAT = "label = \"%s\"";
     private final static String DEPENDENCY_COUNT_FORMAT = "%d;%d;%d;%d";
     private final static String JAR_CLASS_FORMAT = "\"%s\" [color = \"%s\"]\n";
@@ -104,7 +107,12 @@ public class GraphvizDataMapper {
         return String.format(
                 JAR_CLASS_FORMAT,
                 simplifyName ? classNameUtil.simplifyName(node.getName()) : node.getName(),
-                JAR_CLASS_COLOR
+                switch (node.getGitView()) {
+                    case CHANGED -> CHANGED_CLASS_COLOR;
+                    case NOT_CHANGED -> NOT_CHANGED_CLASS_COLOR;
+                    case INTERVAL -> INTERVAL_CLASS_COLOR;
+                    default -> JAR_CLASS_COLOR;
+                }
         );
     }
 
@@ -121,6 +129,7 @@ public class GraphvizDataMapper {
         public void setNewDep(Integer newDep) {
             this.newDep = newDep;
         }
+
         public void setInvokeDep(Integer invokeDep) {
             this.invokeDep = invokeDep;
         }

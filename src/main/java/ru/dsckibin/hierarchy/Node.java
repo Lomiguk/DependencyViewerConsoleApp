@@ -1,33 +1,33 @@
 package ru.dsckibin.hierarchy;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class Node {
     private final String name;
-    private final Boolean isChanged;
-    private final Map<Node, Dependency> dependencies = new HashMap<>();
+    private GitView gitView;
+    private final Dependencies dependencies = new Dependencies();
 
     public Node(String name) {
         this.name = name;
-        this.isChanged = false;
+        this.gitView = GitView.NOT_CHANGED;
     }
 
     public String getName() {
         return name;
     }
 
-    public Boolean getChangedStatus() {
-        return isChanged;
+    public GitView getGitView() {
+        return gitView;
+    }
+    public void setIntervalToGitView() {
+        gitView = GitView.INTERVAL;
     }
 
-    public Map<Node, Dependency> getDependencies() {
+    public Dependencies getDependencies() {
         return dependencies;
     }
 
-    public Node(String name, Boolean isChanged) {
+    public Node(String name, GitView gitView) {
         this.name = name;
-        this.isChanged = isChanged;
+        this.gitView = gitView;
     }
 
     @Override
@@ -47,7 +47,7 @@ public class Node {
         return name.hashCode();
     }
 
-    public Node addDependencies(Map<Node, Dependency> newPairs) {
+    public Node addDependencies(Dependencies newPairs) {
         newPairs.forEach( (node, dependencyTypes) -> {
             if (dependencies.containsKey(node)) {
                 dependencyTypes.forEach( (depType, weight) -> {
@@ -63,5 +63,9 @@ public class Node {
             }
         });
         return this;
+    }
+
+    public void setGitView(GitView gitView) {
+        this.gitView = gitView;
     }
 }

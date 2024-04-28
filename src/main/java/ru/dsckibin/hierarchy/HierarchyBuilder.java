@@ -11,7 +11,6 @@ import ru.dsckibin.util.ClassNameUtil;
 import ru.dsckibin.util.jar.JarMaster;
 
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -21,7 +20,7 @@ import java.util.logging.Logger;
 
 public class HierarchyBuilder {
     private final static Logger LOGGER = Logger.getLogger(HierarchyBuilder.class.getName());
-    private final static boolean DEFAULT_CHANGED_STATUS = true;
+    private final static GitView DEFAULT_CHANGED_STATUS = GitView.CHANGED;
 
     private final JarMaster jarMaster;
     private final ClassNameUtil classNameUtil;
@@ -33,50 +32,74 @@ public class HierarchyBuilder {
         this.classNameUtil = classNameUtil;
     }
 
-    public Set<Node> build(
+    public Hierarchy buildWithDiff(
             String jarPath,
             List<String> diff
     ) {
-        var result = new HashSet<Node>();
-        jarMaster.getClassesAsByteArray(jarPath).forEach((name, bytes) -> {
-            var byteNode = bytesToAsmClassNode(bytes);
-            var jarNode = new Node(
-                    classNameUtil.prepareClassNameToUse(name),
-                    checkDiffsForContains(diff, byteNode.sourceFile)
-            );
-            jarNode
-                    .addDependencies(getJarClassFieldsAsDependencyNodes(byteNode))
-                    .addDependencies(getJarClassMethodDependenciesAsDependencyNodes(byteNode));
-
-            result.add(jarNode);
-        });
-        return result;
+        return build(jarPath, diff);
     }
 
-    public Set<Node> build(
+    public Hierarchy buildWithoutDiff(
             String jarPath
     ) {
-        var result = new HashSet<Node>();
+        return build(jarPath, null);
+    }
+
+    private Hierarchy build(
+            String jarPath,
+            List<String> diff
+    ) {
+        var result = new Hierarchy();
         jarMaster.getClassesAsByteArray(jarPath).forEach((name, bytes) -> {
             var byteNode = bytesToAsmClassNode(bytes);
             var jarNode = new Node(
                     classNameUtil.prepareClassNameToUse(name),
-                    DEFAULT_CHANGED_STATUS
+                    diff != null ? checkDiffsForContains(diff, byteNode.sourceFile) : DEFAULT_CHANGED_STATUS
             );
-            jarNode
-                    .addDependencies(getJarClassFieldsAsDependencyNodes(byteNode))
-                    .addDependencies(getJarClassMethodDependenciesAsDependencyNodes(byteNode));
+            jarNode.addDependencies(result.registeringDependencyNodes(getJarClassFieldsAsDependencyNodes(byteNode)))
+                   .addDependencies(result.registeringDependencyNodes(getJarClassMethodDependenciesAsDependencyNodes(byteNode)));
 
-            result.add(jarNode);
+            result.addNodeAsJar(jarNode);
         });
-        return result;
+
+        return transformIntervalNodes(result);
     }
 
-    private Boolean checkDiffsForContains(Collection<String> diffs, String sourceFile) {
-        for (var elem : diffs) {
-            if (elem.endsWith(sourceFile)) return true;
+    private Hierarchy transformIntervalNodes(Hierarchy rootNodes) {
+        for (var rootNode : rootNodes.values()) {
+            if (!rootNode.getGitView().equals(GitView.CHANGED)) continue;
+            setStatusOfIntermediateNodesAsAnInterval(new HashSet<>(), rootNode);
         }
-        return false;
+        return rootNodes;
+    }
+
+    private void setStatusOfIntermediateNodesAsAnInterval(Set<Node> prePath, Node currentNode) {
+        var dependencyNodes = currentNode.getDependencies().keySet();
+        if (prePath.contains(currentNode)) { return;}
+        var path = new HashSet<>(prePath);
+        path.add(currentNode);
+        for (var node : dependencyNodes) {
+            if (node.getGitView().equals(GitView.CHANGED)) {
+                transformIntervalPathNodes(path);
+                continue;
+            }
+            setStatusOfIntermediateNodesAsAnInterval(path, node);
+        }
+    }
+
+    private void transformIntervalPathNodes(Set<Node> path) {
+        path.forEach(node -> {
+            if (node.getGitView().equals(GitView.NOT_CHANGED)) {
+                node.setIntervalToGitView();
+            }
+        });
+    }
+
+    private GitView checkDiffsForContains(Collection<String> diffs, String sourceFile) {
+        for (var elem : diffs) {
+            if (elem.endsWith(sourceFile)) return GitView.CHANGED;
+        }
+        return GitView.NOT_CHANGED;
     }
 
     private ClassNode bytesToAsmClassNode(byte[] bytes) {
@@ -90,8 +113,8 @@ public class HierarchyBuilder {
         return classNode;
     }
 
-    private Map<Node, Dependency> getJarClassFieldsAsDependencyNodes(ClassNode parentNode) {
-        var result = new HashMap<Node, Dependency>();
+    private Dependencies getJarClassFieldsAsDependencyNodes(ClassNode parentNode) {
+        var result = new Dependencies();
         parentNode.fields.forEach(fieldNode ->
                 addDependency(
                         result,
@@ -102,8 +125,8 @@ public class HierarchyBuilder {
         return result;
     }
 
-    private Map<Node, Dependency> getJarClassMethodDependenciesAsDependencyNodes(ClassNode parentNode) {
-        var result = new HashMap<Node, Dependency>();
+    private Dependencies getJarClassMethodDependenciesAsDependencyNodes(ClassNode parentNode) {
+        var result = new Dependencies();
         parentNode.methods.forEach(methodNode -> {
             var params = Type.getArgumentTypes(methodNode.desc);
             for (var param : params) {
@@ -118,18 +141,18 @@ public class HierarchyBuilder {
                         switch (instruction.getOpcode()) {
                             case Opcodes.NEW -> addDependency(
                                     result,
-                                    classNameUtil.changeNameSplitter(((TypeInsnNode) instruction).desc),
+                                    classNameUtil.prepareAsmName(((TypeInsnNode) instruction).desc),
                                     TypeOfDependency.NEW
                             );
                             case Opcodes.INVOKEINTERFACE, Opcodes.INVOKESPECIAL, Opcodes.INVOKESTATIC, Opcodes.INVOKEVIRTUAL ->
                                     addDependency(
                                             result,
-                                            classNameUtil.changeNameSplitter(((MethodInsnNode) instruction).owner),
+                                            classNameUtil.prepareAsmName(((MethodInsnNode) instruction).owner),
                                             TypeOfDependency.INVOKE
                                     );
                             case Opcodes.INVOKEDYNAMIC -> addDependency(
                                     result,
-                                    classNameUtil.changeNameSplitter(((InvokeDynamicInsnNode) instruction).bsm.getOwner()),
+                                    classNameUtil.prepareAsmName(((InvokeDynamicInsnNode) instruction).bsm.getOwner()),
                                     TypeOfDependency.INVOKE
                             );
                         }

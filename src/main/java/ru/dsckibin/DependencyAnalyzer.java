@@ -1,7 +1,8 @@
 package ru.dsckibin;
 
+import ru.dsckibin.exception.JarFileNotFoundException;
+import ru.dsckibin.hierarchy.Hierarchy;
 import ru.dsckibin.hierarchy.HierarchyBuilder;
-import ru.dsckibin.hierarchy.Node;
 import ru.dsckibin.ui.ConsoleUiManager;
 import ru.dsckibin.util.ClassNameUtil;
 import ru.dsckibin.util.git.GitMaster;
@@ -11,9 +12,7 @@ import ru.dsckibin.util.vizualization.GraphvizDataMapper;
 import ru.dsckibin.util.vizualization.GraphvizTool;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 public class DependencyAnalyzer {
     private final GitMaster gitMaster;
@@ -22,14 +21,12 @@ public class DependencyAnalyzer {
     private final ConsoleUiManager ui = new ConsoleUiManager();
     private final JarMaster jarMaster = new JarMaster();
     private final IgnoreUtil ignoreUtil = new IgnoreUtil();
-    private final ClassNameUtil classNameUtil = new ClassNameUtil();
     private final HierarchyBuilder hierarchyBuilder = new HierarchyBuilder(jarMaster, new ClassNameUtil());
 
     private final GraphvizTool graphvizTool = new GraphvizTool(
             "graph",
             new StringBuilder(),
-            new GraphvizDataMapper(classNameUtil),
-            classNameUtil
+            new GraphvizDataMapper(new ClassNameUtil())
     );
 
     public DependencyAnalyzer() {
@@ -56,12 +53,11 @@ public class DependencyAnalyzer {
     }
 
     private String getJarFile(String directory) {
-        var jars = jarMaster.searchJar(directory);
-        if (jars.size() > 1) {
-            return ui.select(jarMaster.searchJar(directory), "jar files");
-        } else {
-            return jars.get(0);
+        var result = ui.select(jarMaster.searchJar(directory), "jar files");
+        if (result == null) {
+            throw new JarFileNotFoundException();
         }
+        return result;
     }
 
     public void start(
@@ -71,22 +67,22 @@ public class DependencyAnalyzer {
     ) {
         List<String> ignoredClasses = getIgnoredNames(useIgnoreFile);
 
-        Set<Node> jarNodes;
+        Hierarchy jarNodes;
         if (useGitDiff) {
             var branch = ui.select(gitMaster.getBranches());
             var diffClasses = getChangedClasses(branch);
-            jarNodes = hierarchyBuilder.build(
+            jarNodes = hierarchyBuilder.buildWithDiff(
                     jar,
                     diffClasses
             );
         } else {
-            jarNodes = hierarchyBuilder.build(jar);
+            jarNodes = hierarchyBuilder.buildWithoutDiff(jar);
         }
 
-        ui.printJarNodes(jarNodes);
+        ui.printJarNodes(jarNodes.getJarNodes());
 
         graphvizTool.drawGraph(
-                jarNodes,
+                jarNodes.getJarNodes(),
                 useGitDiff,
                 ignoredClasses,
                 simplifyNames

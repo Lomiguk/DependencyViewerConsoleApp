@@ -18,6 +18,11 @@ public class ConsoleUiManager {
     }
 
     public <T> T select(List<T> objs, String topic) {
+        if (objs.size() == 1) {
+            return objs.get(0);
+        } else if (objs.isEmpty()) {
+            return null;
+        }
         System.out.printf("Select %s: \n", topic);
         return selecting(objs);
     }
@@ -55,7 +60,7 @@ public class ConsoleUiManager {
 
     public void printJarNodes(Collection<Node> jarNodes) {
         jarNodes.forEach(it -> {
-                    System.out.printf("Class: %s; In git dif - %s%n", it.getName(), it.getChangedStatus());
+                    System.out.printf("Class: %s; In git dif - %s%n", it.getName(), it.getGitView());
                     it.getDependencies().forEach((key, value) -> {
                                 System.out.printf(
                                         "   dep (%s) types: \n",

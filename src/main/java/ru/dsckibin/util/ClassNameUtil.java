@@ -51,11 +51,8 @@ public class ClassNameUtil {
     }
 
     private String prepareObject(String className) {
-        if (className.endsWith(OBJECT_MARKER_POSTFIX)) {
-            return className.substring(1, className.length()-1);
-        } else {
-            return className.substring(1);
-        }
+        var result = className.replace(";", "");
+        return result.substring(1);
     }
 
     private String prepareArray(String className) {
