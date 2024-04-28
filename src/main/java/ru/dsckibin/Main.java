@@ -1,9 +1,9 @@
 package ru.dsckibin;
 
 public class Main {
-    private final static boolean USE_GIT_DIFF_DEFAULT = true;
+    private final static boolean USE_GIT_DIFF_DEFAULT = false;
     private final static boolean USE_IGNORE_FILE_DEFAULT = true;
-    private final static boolean SIMPLIFY_CLASS_NAMES = false;
+    private final static boolean SIMPLIFY_CLASS_NAMES = true;
     public static void main(String[] args) {
         DependencyAnalyzer dependencyAnalyzer;
         if (args.length == 0) {

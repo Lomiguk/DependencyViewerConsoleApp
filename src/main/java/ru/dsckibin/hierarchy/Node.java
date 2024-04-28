@@ -1,33 +1,33 @@
 package ru.dsckibin.hierarchy;
 
-import java.util.HashMap;
-import java.util.Map;
-
 public class Node {
     private final String name;
-    private final Boolean isChanged;
-    private final Map<String, Dependency> dependencies = new HashMap<>();
+    private GitView gitView;
+    private final Dependencies dependencies = new Dependencies();
 
     public Node(String name) {
         this.name = name;
-        this.isChanged = false;
+        this.gitView = GitView.NOT_CHANGED;
     }
 
     public String getName() {
         return name;
     }
 
-    public Boolean getChangedStatus() {
-        return isChanged;
+    public GitView getGitView() {
+        return gitView;
+    }
+    public void setIntervalToGitView() {
+        gitView = GitView.INTERVAL;
     }
 
-    public Map<String, Dependency> getDependencies() {
+    public Dependencies getDependencies() {
         return dependencies;
     }
 
-    public Node(String name, Boolean isChanged) {
+    public Node(String name, GitView gitView) {
         this.name = name;
-        this.isChanged = isChanged;
+        this.gitView = gitView;
     }
 
     @Override
@@ -47,11 +47,11 @@ public class Node {
         return name.hashCode();
     }
 
-    public Node addDependencies(Map<String, Dependency> newPairs) {
-        newPairs.forEach((depName, dependencyTypes) -> {
-            if (dependencies.containsKey(depName)) {
+    public Node addDependencies(Dependencies newPairs) {
+        newPairs.forEach( (node, dependencyTypes) -> {
+            if (dependencies.containsKey(node)) {
                 dependencyTypes.forEach( (depType, weight) -> {
-                    var pairDepTypeWeight = dependencies.get(depName);
+                    var pairDepTypeWeight = dependencies.get(node);
                     if (pairDepTypeWeight.containsKey(depType)) {
                         pairDepTypeWeight.put(depType, pairDepTypeWeight.get(depType) + weight);
                     } else {
@@ -59,9 +59,13 @@ public class Node {
                     }
                 });
             } else {
-                dependencies.put(depName, dependencyTypes);
+                dependencies.put(node, dependencyTypes);
             }
         });
         return this;
+    }
+
+    public void setGitView(GitView gitView) {
+        this.gitView = gitView;
     }
 }
