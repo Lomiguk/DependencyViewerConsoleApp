@@ -1,10 +1,12 @@
 package ru.dsckibin.ui;
 
 import ru.dsckibin.exception.ConsoleReadingException;
+import ru.dsckibin.hierarchy.Node;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Collection;
 import java.util.List;
 
 public class ConsoleUiManager {
@@ -49,6 +51,22 @@ public class ConsoleUiManager {
         } catch (IOException e) {
             throw new ConsoleReadingException("Failed to read path to git repository");
         }
+    }
 
+    public void printJarNodes(Collection<Node> jarNodes) {
+        jarNodes.forEach(it -> {
+                    System.out.printf("Class: %s; In git dif - %s%n", it.getName(), it.getChangedStatus());
+                    it.getDependencies().forEach((key, value) -> {
+                                System.out.printf(
+                                        "   dep (%s) types: \n",
+                                        key.getName()
+                                );
+                                value.forEach((type, weight) -> {
+                                    System.out.printf("    * %s - %d \n", type, weight);
+                                });
+                            }
+                    );
+                }
+        );
     }
 }

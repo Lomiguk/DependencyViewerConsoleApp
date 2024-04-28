@@ -56,12 +56,12 @@ public class GraphvizTool {
                 stringBuilder.append(
                         dataMapper.mapJarClass(node, simplifyNames)
                 );
-                node.getDependencies().forEach((className, dependency) -> {
-                    if (!isIgnored(ignoredNames, className)) {
+                node.getDependencies().forEach((depNode, dependency) -> {
+                    if (!isIgnored(ignoredNames, depNode.getName())) {
                         stringBuilder.append(
                                 dataMapper.mapDependencyToEdgeString(
                                         node,
-                                        className,
+                                        depNode.getName(),
                                         dependency,
                                         simplifyNames
                                 )

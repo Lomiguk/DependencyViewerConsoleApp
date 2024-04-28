@@ -6,7 +6,7 @@ import java.util.Map;
 public class Node {
     private final String name;
     private final Boolean isChanged;
-    private final Map<String, Dependency> dependencies = new HashMap<>();
+    private final Map<Node, Dependency> dependencies = new HashMap<>();
 
     public Node(String name) {
         this.name = name;
@@ -21,7 +21,7 @@ public class Node {
         return isChanged;
     }
 
-    public Map<String, Dependency> getDependencies() {
+    public Map<Node, Dependency> getDependencies() {
         return dependencies;
     }
 
@@ -47,11 +47,11 @@ public class Node {
         return name.hashCode();
     }
 
-    public Node addDependencies(Map<String, Dependency> newPairs) {
-        newPairs.forEach((depName, dependencyTypes) -> {
-            if (dependencies.containsKey(depName)) {
+    public Node addDependencies(Map<Node, Dependency> newPairs) {
+        newPairs.forEach( (node, dependencyTypes) -> {
+            if (dependencies.containsKey(node)) {
                 dependencyTypes.forEach( (depType, weight) -> {
-                    var pairDepTypeWeight = dependencies.get(depName);
+                    var pairDepTypeWeight = dependencies.get(node);
                     if (pairDepTypeWeight.containsKey(depType)) {
                         pairDepTypeWeight.put(depType, pairDepTypeWeight.get(depType) + weight);
                     } else {
@@ -59,7 +59,7 @@ public class Node {
                     }
                 });
             } else {
-                dependencies.put(depName, dependencyTypes);
+                dependencies.put(node, dependencyTypes);
             }
         });
         return this;

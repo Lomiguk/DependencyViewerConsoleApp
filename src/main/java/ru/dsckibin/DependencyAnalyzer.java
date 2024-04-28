@@ -83,7 +83,7 @@ public class DependencyAnalyzer {
             jarNodes = hierarchyBuilder.build(jar);
         }
 
-        jarNodesToConsole(jarNodes);
+        ui.printJarNodes(jarNodes);
 
         graphvizTool.drawGraph(
                 jarNodes,
@@ -106,23 +106,6 @@ public class DependencyAnalyzer {
                 branch,
                 ui.select(gitMaster.getCommits(branch)).getHash(),
                 ui.select(gitMaster.getCommits(branch)).getHash()
-        );
-    }
-
-    private void jarNodesToConsole(Collection<Node> jarNodes) {
-        jarNodes.forEach(it -> {
-                    System.out.printf("Class: %s; In git dif - %s%n", it.getName(), it.getChangedStatus());
-                    it.getDependencies().forEach((key, value) -> {
-                                System.out.printf(
-                                        "   dep (%s) types: \n",
-                                        key
-                                );
-                                value.forEach((type, weight) -> {
-                                    System.out.printf("    * %s - %d \n", type, weight);
-                                });
-                            }
-                    );
-                }
         );
     }
 }

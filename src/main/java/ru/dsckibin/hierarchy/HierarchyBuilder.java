@@ -16,8 +16,11 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 public class HierarchyBuilder {
+    private final static Logger LOGGER = Logger.getLogger(HierarchyBuilder.class.getName());
     private final static boolean DEFAULT_CHANGED_STATUS = true;
 
     private final JarMaster jarMaster;
@@ -87,8 +90,8 @@ public class HierarchyBuilder {
         return classNode;
     }
 
-    private Map<String, Dependency> getJarClassFieldsAsDependencyNodes(ClassNode parentNode) {
-        var result = new HashMap<String, Dependency>();
+    private Map<Node, Dependency> getJarClassFieldsAsDependencyNodes(ClassNode parentNode) {
+        var result = new HashMap<Node, Dependency>();
         parentNode.fields.forEach(fieldNode ->
                 addDependency(
                         result,
@@ -99,8 +102,8 @@ public class HierarchyBuilder {
         return result;
     }
 
-    private Map<String, Dependency> getJarClassMethodDependenciesAsDependencyNodes(ClassNode parentNode) {
-        var result = new HashMap<String, Dependency>();
+    private Map<Node, Dependency> getJarClassMethodDependenciesAsDependencyNodes(ClassNode parentNode) {
+        var result = new HashMap<Node, Dependency>();
         parentNode.methods.forEach(methodNode -> {
             var params = Type.getArgumentTypes(methodNode.desc);
             for (var param : params) {
@@ -137,21 +140,32 @@ public class HierarchyBuilder {
     }
 
     private void addDependency(
-            Map<String, Dependency> dependencies,
+            Map<Node, Dependency> dependencies,
             String name,
             TypeOfDependency typeOfDependency
     ) {
-        if (dependencies.containsKey(name)) {
-            var dependency = dependencies.get(name);
+        if (dependencies.containsKey(new Node(name))) {
+            Node node = null;
+            for (var depNode : dependencies.keySet()) {
+                if (depNode.getName().equals(name)) {
+                    node = depNode;
+                }
+            }
+            if (node == null) {
+                LOGGER.log(Level.WARNING, String.format("%s class node was skipped", name));
+                return;
+            }
+            var dependency = dependencies.get(node);
             if (dependency.containsKey(typeOfDependency)) {
                 dependency.upWeight(typeOfDependency);
             } else {
                 dependency.put(typeOfDependency, 1);
             }
         } else {
+            var node = new Node(name);
             var dependency = new Dependency();
             dependency.putNew(typeOfDependency);
-            dependencies.put(name, dependency);
+            dependencies.put(node, dependency);
         }
     }
 }
