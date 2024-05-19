@@ -67,22 +67,22 @@ public class DependencyAnalyzer {
     ) {
         List<String> ignoredClasses = getIgnoredNames(useIgnoreFile);
 
-        Hierarchy jarNodes;
+        Hierarchy hierarchy;
         if (useGitDiff) {
             var branch = ui.select(gitMaster.getBranches());
             var diffClasses = getChangedClasses(branch);
-            jarNodes = hierarchyBuilder.buildWithDiff(
+            hierarchy = hierarchyBuilder.buildWithDiff(
                     jar,
                     diffClasses
             );
         } else {
-            jarNodes = hierarchyBuilder.buildWithoutDiff(jar);
+            hierarchy = hierarchyBuilder.buildWithoutDiff(jar);
         }
 
-        ui.printJarNodes(jarNodes.getJarNodes());
+        ui.printHierarchy(hierarchy.getJarNodes());
 
         graphvizTool.drawGraph(
-                jarNodes.getJarNodes(),
+                hierarchy.getJarNodes(),
                 useGitDiff,
                 ignoredClasses,
                 simplifyNames
