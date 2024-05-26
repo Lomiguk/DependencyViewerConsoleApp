@@ -17,15 +17,12 @@ import java.util.List;
 
 public class DependencyAnalyzer {
 
-    private final static String DEFAULT_DEP_IGNORE = "dependency_class.ignore";
-
     private final GitMaster gitMaster;
     private final String jar;
     private final ConsoleUiManager ui = new ConsoleUiManager();
     private final JarMaster jarMaster = new JarMaster();
     private final IgnoreUtil ignoreUtil = new IgnoreUtil();
     private final HierarchyBuilder hierarchyBuilder = new HierarchyBuilder(jarMaster, new ClassNameUtil());
-
     private final String ignorePath;
 
     private final GraphvizTool graphvizTool = new GraphvizTool(

@@ -1,6 +1,6 @@
 package ru.dsckibin.util.vizualization;
 
-import ru.dsckibin.hierarchy.GitView;
+import ru.dsckibin.hierarchy.GitDiffStatus;
 import ru.dsckibin.hierarchy.Node;
 
 import java.io.FileNotFoundException;
@@ -49,8 +49,8 @@ public class GraphvizTool {
     ) {
         for (var node : hierarchy) {
             if (isIgnored(ignoredNames, node.getName())) continue;
-            var gitStatus = node.getGitView();
-            if (!useGitDif || gitStatus.equals(GitView.CHANGED) || gitStatus.equals(GitView.INTERVAL)) {
+            var gitStatus = node.getGitDiffStatus();
+            if (!useGitDif || gitStatus.equals(GitDiffStatus.CHANGED) || gitStatus.equals(GitDiffStatus.INTERVAL)) {
                 stringBuilder.append(
                         dataMapper.mapJarClass(node, simplifyNames)
                 );

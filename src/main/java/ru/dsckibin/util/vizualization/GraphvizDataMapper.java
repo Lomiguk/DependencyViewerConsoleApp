@@ -107,7 +107,7 @@ public class GraphvizDataMapper {
         return String.format(
                 JAR_CLASS_FORMAT,
                 simplifyName ? classNameUtil.simplifyName(node.getName()) : node.getName(),
-                switch (node.getGitView()) {
+                switch (node.getGitDiffStatus()) {
                     case CHANGED -> CHANGED_CLASS_COLOR;
                     case NOT_CHANGED -> NOT_CHANGED_CLASS_COLOR;
                     case INTERVAL -> INTERVAL_CLASS_COLOR;

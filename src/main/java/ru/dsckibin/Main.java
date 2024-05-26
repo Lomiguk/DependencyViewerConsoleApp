@@ -4,8 +4,6 @@ public class Main {
     private final static boolean USE_SIMPLIFY_CLASS_NAMES_DEFAULT = true;
 
     public static void main(String[] args) {
-        DependencyAnalyzer dependencyAnalyzer;
-
         String projectPath = null;
         String jarPath = null;
         Boolean useSimplifyClassNames = null;

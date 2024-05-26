@@ -59,7 +59,7 @@ public class ConsoleUiManager {
 
     public void printHierarchy(Collection<Node> jarNodes) {
         jarNodes.forEach(it -> {
-                    System.out.printf("Class: %s; In git dif - %s%n", it.getName(), it.getGitView());
+                    System.out.printf("Class: %s; In git dif - %s%n", it.getName(), it.getGitDiffStatus());
                     it.getDependencies().forEach((key, value) -> {
                                 System.out.printf(
                                         "   dep (%s) types: \n",

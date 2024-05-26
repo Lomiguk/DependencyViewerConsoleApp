@@ -11,9 +11,9 @@ public class Hierarchy extends HashMap<String, Node> {
         var existedNode = this.get(newNode.getName());
         if (existedNode != null) {
             existedNode.addDependencies(newNode.getDependencies());
-            existedNode.setGitView(existedNode.getGitView().equals(GitView.NOT_CHANGED)
-                    ? newNode.getGitView()
-                    : existedNode.getGitView()
+            existedNode.setGitDiffStatus(existedNode.getGitDiffStatus().equals(GitDiffStatus.NOT_CHANGED)
+                    ? newNode.getGitDiffStatus()
+                    : existedNode.getGitDiffStatus()
             );
         } else {
             this.put(newNode.getName(), newNode);

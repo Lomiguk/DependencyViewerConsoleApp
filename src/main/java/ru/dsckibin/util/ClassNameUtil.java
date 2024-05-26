@@ -7,7 +7,6 @@ import java.util.ArrayList;
 public class ClassNameUtil {
     private static final String CLASS_EXTENSION = ".class";
     private static final String OBJECT_MARKER_PREFIX = "L";
-    private static final String OBJECT_MARKER_POSTFIX = ";";
     private static final String CLASS_PATH_SPLITTER = "/";
     private static final String DOT_CLASS_PATH_SPLITTER = ".";
     private static final String ARRAY_START_MARKER = "[";

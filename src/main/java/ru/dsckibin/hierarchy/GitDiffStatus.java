@@ -1,6 +1,6 @@
 package ru.dsckibin.hierarchy;
 
-public enum GitView {
+public enum GitDiffStatus {
     CHANGED,
     NOT_CHANGED,
     INTERVAL

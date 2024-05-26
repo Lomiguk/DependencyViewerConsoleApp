@@ -20,7 +20,7 @@ import java.util.logging.Logger;
 
 public class HierarchyBuilder {
     private final static Logger LOGGER = Logger.getLogger(HierarchyBuilder.class.getName());
-    private final static GitView DEFAULT_CHANGED_STATUS = GitView.CHANGED;
+    private final static GitDiffStatus DEFAULT_CHANGED_STATUS = GitDiffStatus.CHANGED;
 
     private final JarMaster jarMaster;
     private final ClassNameUtil classNameUtil;
@@ -67,7 +67,7 @@ public class HierarchyBuilder {
 
     private Hierarchy transformIntervalNodes(Hierarchy rootNodes) {
         for (var rootNode : rootNodes.values()) {
-            if (!rootNode.getGitView().equals(GitView.CHANGED)) continue;
+            if (!rootNode.getGitDiffStatus().equals(GitDiffStatus.CHANGED)) continue;
             setStatusOfIntermediateNodesAsAnInterval(new HashSet<>(), rootNode);
         }
         return rootNodes;
@@ -79,7 +79,7 @@ public class HierarchyBuilder {
         var path = new HashSet<>(prePath);
         path.add(currentNode);
         for (var node : dependencyNodes) {
-            if (node.getGitView().equals(GitView.CHANGED)) {
+            if (node.getGitDiffStatus().equals(GitDiffStatus.CHANGED)) {
                 transformIntervalPathNodes(path);
                 continue;
             }
@@ -89,17 +89,17 @@ public class HierarchyBuilder {
 
     private void transformIntervalPathNodes(Set<Node> path) {
         path.forEach(node -> {
-            if (node.getGitView().equals(GitView.NOT_CHANGED)) {
+            if (node.getGitDiffStatus().equals(GitDiffStatus.NOT_CHANGED)) {
                 node.setIntervalToGitView();
             }
         });
     }
 
-    private GitView checkDiffsForContains(Collection<String> diffs, String sourceFile) {
+    private GitDiffStatus checkDiffsForContains(Collection<String> diffs, String sourceFile) {
         for (var elem : diffs) {
-            if (elem.endsWith(sourceFile)) return GitView.CHANGED;
+            if (elem.endsWith(sourceFile)) return GitDiffStatus.CHANGED;
         }
-        return GitView.NOT_CHANGED;
+        return GitDiffStatus.NOT_CHANGED;
     }
 
     private ClassNode bytesToAsmClassNode(byte[] bytes) {

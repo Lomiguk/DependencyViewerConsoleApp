@@ -1,6 +1,6 @@
 package ru.dsckibin.util.jar;
 
-import ru.dsckibin.util.FileSearch;
+import ru.dsckibin.util.FileSearcher;
 
 import java.io.File;
 import java.io.IOException;
@@ -15,14 +15,14 @@ import java.util.jar.JarFile;
 public class JarMaster {
     private final static Set<String> JAVA_ARCHIVE_EXTENSION = Set.of(".jar", ".war", ".zip");
 
-    private final FileSearch fileSearch = new FileSearch();
+    private final FileSearcher fileSearcher = new FileSearcher();
 
     public List<String> searchJar(String parentDirectory) {
-        fileSearch.searchFilesInDirectoryByExtensions(
+        fileSearcher.searchFilesInDirectoryByExtensions(
                 new File(parentDirectory),
                 JAVA_ARCHIVE_EXTENSION
         );
-        return fileSearch.getResult();
+        return fileSearcher.getResult();
     }
 
     public Map<String, byte[]> getClassesAsByteArray(String jarPath) {

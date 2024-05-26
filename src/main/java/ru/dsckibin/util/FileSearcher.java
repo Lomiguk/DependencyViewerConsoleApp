@@ -8,8 +8,8 @@ import java.util.List;
 import java.util.Set;
 import java.util.logging.Logger;
 
-public class FileSearch {
-    private static final Logger LOGGER = Logger.getLogger(FileSearch.class.getName());
+public class FileSearcher {
+    private static final Logger LOGGER = Logger.getLogger(FileSearcher.class.getName());
     private final List<String> result = new ArrayList<>();
     public List<String> getResult() {
         return result;

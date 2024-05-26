@@ -2,32 +2,32 @@ package ru.dsckibin.hierarchy;
 
 public class Node {
     private final String name;
-    private GitView gitView;
+    private GitDiffStatus gitDiffStatus;
     private final Dependencies dependencies = new Dependencies();
 
     public Node(String name) {
         this.name = name;
-        this.gitView = GitView.NOT_CHANGED;
+        this.gitDiffStatus = GitDiffStatus.NOT_CHANGED;
     }
 
     public String getName() {
         return name;
     }
 
-    public GitView getGitView() {
-        return gitView;
+    public GitDiffStatus getGitDiffStatus() {
+        return gitDiffStatus;
     }
     public void setIntervalToGitView() {
-        gitView = GitView.INTERVAL;
+        gitDiffStatus = GitDiffStatus.INTERVAL;
     }
 
     public Dependencies getDependencies() {
         return dependencies;
     }
 
-    public Node(String name, GitView gitView) {
+    public Node(String name, GitDiffStatus gitDiffStatus) {
         this.name = name;
-        this.gitView = gitView;
+        this.gitDiffStatus = gitDiffStatus;
     }
 
     @Override
@@ -65,7 +65,7 @@ public class Node {
         return this;
     }
 
-    public void setGitView(GitView gitView) {
-        this.gitView = gitView;
+    public void setGitDiffStatus(GitDiffStatus gitDiffStatus) {
+        this.gitDiffStatus = gitDiffStatus;
     }
 }
