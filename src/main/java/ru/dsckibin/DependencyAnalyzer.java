@@ -11,17 +11,22 @@ import ru.dsckibin.util.jar.JarMaster;
 import ru.dsckibin.util.vizualization.GraphvizDataMapper;
 import ru.dsckibin.util.vizualization.GraphvizTool;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
 public class DependencyAnalyzer {
+
+    private final static String DEFAULT_DEP_IGNORE = "dependency_class.ignore";
+
     private final GitMaster gitMaster;
-    private final String gitRepo;
     private final String jar;
     private final ConsoleUiManager ui = new ConsoleUiManager();
     private final JarMaster jarMaster = new JarMaster();
     private final IgnoreUtil ignoreUtil = new IgnoreUtil();
     private final HierarchyBuilder hierarchyBuilder = new HierarchyBuilder(jarMaster, new ClassNameUtil());
+
+    private final String ignorePath;
 
     private final GraphvizTool graphvizTool = new GraphvizTool(
             "graph",
@@ -29,30 +34,26 @@ public class DependencyAnalyzer {
             new GraphvizDataMapper(new ClassNameUtil())
     );
 
-    public DependencyAnalyzer() {
-        gitRepo = ui.getGitRepo();
-        jar = getJarFile(gitRepo);
-        gitMaster = new GitMaster(gitRepo);
+    public DependencyAnalyzer(
+            String gitRepoPath,
+            String jarPath,
+            String pathToIgnore
+    ) {
+        if (gitRepoPath != null) {
+            gitMaster = new GitMaster(gitRepoPath);
+        } else {
+            gitMaster = null;
+        }
+        jar = jarPath == null
+                ? getJarFilePath(
+                        gitRepoPath == null
+                                ? ui.getJarParentDir()
+                                : gitRepoPath)
+                : jarPath;
+        ignorePath = pathToIgnore;
     }
 
-    public DependencyAnalyzer(String gitRepoPath) {
-        gitRepo = getGitRepo(gitRepoPath);
-        jar = getJarFile(gitRepo);
-        gitMaster = new GitMaster(gitRepo);
-    }
-
-    public DependencyAnalyzer(String gitRepoPath, String jarPath) {
-        gitRepo = getGitRepo(gitRepoPath);
-        jar = jarPath;
-        gitMaster = new GitMaster(gitRepo);
-
-    }
-
-    private String getGitRepo(String path) {
-        return path == null ? ui.getGitRepo() : path;
-    }
-
-    private String getJarFile(String directory) {
+    private String getJarFilePath(String directory) {
         var result = ui.select(jarMaster.searchJar(directory), "jar files");
         if (result == null) {
             throw new JarFileNotFoundException();
@@ -61,37 +62,38 @@ public class DependencyAnalyzer {
     }
 
     public void start(
-            Boolean useGitDiff,
-            Boolean useIgnoreFile,
             Boolean simplifyNames
     ) {
-        List<String> ignoredClasses = getIgnoredNames(useIgnoreFile);
+        var ignoredClasses = getIgnoredNames(ignorePath);
 
-        Hierarchy hierarchy;
-        if (useGitDiff) {
-            var branch = ui.select(gitMaster.getBranches());
-            var diffClasses = getChangedClasses(branch);
-            hierarchy = hierarchyBuilder.buildWithDiff(
-                    jar,
-                    diffClasses
-            );
-        } else {
-            hierarchy = hierarchyBuilder.buildWithoutDiff(jar);
-        }
+        var hierarchy = getHierarchy();
 
         ui.printHierarchy(hierarchy.getJarNodes());
 
         graphvizTool.drawGraph(
                 hierarchy.getJarNodes(),
-                useGitDiff,
+                gitMaster != null,
                 ignoredClasses,
                 simplifyNames
         );
     }
 
-    private List<String> getIgnoredNames(Boolean useIgnoreFile) {
-        if (useIgnoreFile) {
-            return ignoreUtil.getIgnoredNamesFrom("dependency_class.ignore");
+    private Hierarchy getHierarchy() {
+        if (gitMaster != null) {
+            var branch = ui.select(gitMaster.getBranches());
+            var diffClasses = getChangedClasses(branch);
+            return hierarchyBuilder.buildWithDiff(
+                    jar,
+                    diffClasses
+            );
+        } else {
+            return hierarchyBuilder.buildWithoutDiff(jar);
+        }
+    }
+
+    private List<String> getIgnoredNames(String path) {
+        if (path != null && new File(path).exists()) {
+            return ignoreUtil.getIgnoredNamesFrom(path);
         } else {
             return new ArrayList<>();
         }

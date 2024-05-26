@@ -19,7 +19,7 @@ public class FileSearch {
         if (file.isDirectory()) {
             searchByExtensions(file, extensions);
         } else {
-            LOGGER.info("Try search file in file : ${file.name}");
+            LOGGER.info(String.format("Try search file in file : %s", file.getName()));
             throw new NotDirectoryException(file.getName());
         }
     }

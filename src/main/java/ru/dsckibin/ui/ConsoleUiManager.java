@@ -47,10 +47,9 @@ public class ConsoleUiManager {
         }
     }
 
-    public String getGitRepo() {
+    public String getJarParentDir() {
         try {
-            System.out.println("Git repo not found");
-            System.out.println("Write absolute path to git repository:");
+            System.out.println("Write absolute path to Jar parent directory:");
             System.out.print(INPUT_MARKER);
             return reader.readLine();
         } catch (IOException e) {
