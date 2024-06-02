@@ -3,6 +3,7 @@ package ru.dsckibin.util;
 import ru.dsckibin.util.asm.Primitive;
 
 import java.util.ArrayList;
+import java.util.Set;
 
 public class ClassNameUtil {
     private static final String CLASS_EXTENSION = ".class";
@@ -35,14 +36,25 @@ public class ClassNameUtil {
         }
         if (result.startsWith(OBJECT_MARKER_PREFIX)) {
             result = prepareObject(result);
-        } else if (Primitive.enumSet().contains(result)) {
-            result = Primitive.valueOf(result).TYPE_NAME;
+        } else if (Primitive.enumSet().contains(onlyLetter(result))) {
+            result = Primitive.valueOf(onlyLetter(result)).TYPE_NAME;
         }
         if (result.contains(SUBCLASS_MARKER)) {
             result = result.substring(0, result.indexOf(SUBCLASS_MARKER)-1);
         }
 
         return changeNameSplitter(result);
+    }
+
+    private String onlyLetter(String str) {
+        var chars = str.toCharArray();
+        StringBuilder sb = new StringBuilder();
+        for (char c : chars) {
+            if(Character.isLetter(c)) {
+                sb.append(c);
+            }
+        }
+        return sb.toString();
     }
 
     public String changeNameSplitter(String name) {
