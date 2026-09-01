@@ -1,32 +1,26 @@
 package ru.dsckibin.util.ignoring;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 public class IgnoreUtil {
     public List<String> getIgnoredNamesFrom(String ignoreFileName) {
-        try {
-            var result = new ArrayList<String>();
-            var file = new File(ignoreFileName);
-            var fr = new FileReader(file);
-            var br = new BufferedReader(fr);
-            String line;
-            while((line = br.readLine()) != null){
-                if (!line.trim().isEmpty()) {
-                    result.add(line.trim());
-                }
-            }
+        var path = Path.of(ignoreFileName);
+        if (!Files.isRegularFile(path)) {
+            throw new IllegalArgumentException("ignore file does not exist: " + path);
+        }
 
-            return result;
-        } catch (FileNotFoundException e) {
-            throw new RuntimeException(e);
+        try {
+            return Files.readAllLines(path, StandardCharsets.UTF_8).stream()
+                    .map(String::trim)
+                    .filter(line -> !line.isEmpty())
+                    .filter(line -> !line.startsWith("#"))
+                    .toList();
         } catch (IOException e) {
-            throw new RuntimeException(e);
+            throw new IllegalArgumentException("failed to read ignore file: " + path, e);
         }
     }
 }

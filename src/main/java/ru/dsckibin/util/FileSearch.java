@@ -6,22 +6,20 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
-import java.util.logging.Logger;
+import java.util.Comparator;
 
 public class FileSearch {
-    private static final Logger LOGGER = Logger.getLogger(FileSearch.class.getName());
     private final List<String> result = new ArrayList<>();
-    public List<String> getResult() {
-        return result;
-    }
 
-    public void searchFilesInDirectoryByExtensions(File file, Set<String> extensions) {
+    public List<String> searchFilesInDirectoryByExtensions(File file, Set<String> extensions) {
+        result.clear();
         if (file.isDirectory()) {
             searchByExtensions(file, extensions);
         } else {
-            LOGGER.info("Try search file in file : ${file.name}");
-            throw new NotDirectoryException(file.getName());
+            throw new NotDirectoryException("Not a directory: " + file.getAbsolutePath());
         }
+        result.sort(Comparator.naturalOrder());
+        return List.copyOf(result);
     }
 
     private void searchByExtensions(File file, Set<String> extensions) {
@@ -40,7 +38,7 @@ public class FileSearch {
         }
     }
 
-    private Boolean checkExtension(String fileName, Set<String> extensions) {
+    private boolean checkExtension(String fileName, Set<String> extensions) {
         var isContain = false;
         for (var extension : extensions) {
             if (fileName.endsWith(extension)) {

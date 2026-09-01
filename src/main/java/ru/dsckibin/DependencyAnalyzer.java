@@ -7,13 +7,14 @@ import ru.dsckibin.util.ClassNameUtil;
 import ru.dsckibin.util.git.GitMaster;
 import ru.dsckibin.util.ignoring.IgnoreUtil;
 import ru.dsckibin.util.jar.JarMaster;
-import ru.dsckibin.util.vizualization.GraphvizDataMapper;
-import ru.dsckibin.util.vizualization.GraphvizTool;
+import ru.dsckibin.util.visualization.GraphvizDataMapper;
+import ru.dsckibin.util.visualization.GraphvizTool;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Set;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
 public class DependencyAnalyzer {
     private final GitMaster gitMaster;
@@ -27,9 +28,7 @@ public class DependencyAnalyzer {
 
     private final GraphvizTool graphvizTool = new GraphvizTool(
             "graph",
-            new StringBuilder(),
-            new GraphvizDataMapper(classNameUtil),
-            classNameUtil
+            new GraphvizDataMapper(classNameUtil)
     );
 
     public DependencyAnalyzer() {
@@ -46,30 +45,44 @@ public class DependencyAnalyzer {
 
     public DependencyAnalyzer(String gitRepoPath, String jarPath) {
         gitRepo = getGitRepo(gitRepoPath);
-        jar = jarPath;
+        jar = validateArchive(jarPath);
         gitMaster = new GitMaster(gitRepo);
-
     }
 
     private String getGitRepo(String path) {
-        return path == null ? ui.getGitRepo() : path;
+        var result = path == null ? ui.getGitRepo() : path;
+        if (result == null || result.isBlank() || !Files.isDirectory(Path.of(result))) {
+            throw new IllegalArgumentException("repository directory does not exist: " + result);
+        }
+        return result;
     }
 
     private String getJarFile(String directory) {
         var jars = jarMaster.searchJar(directory);
-        if (jars.size() > 1) {
-            return ui.select(jarMaster.searchJar(directory), "jar files");
-        } else {
-            return jars.get(0);
+        if (jars.isEmpty()) {
+            throw new IllegalArgumentException("no JAR, WAR, or ZIP archive found in " + directory);
         }
+        if (jars.size() > 1) {
+            return ui.select(jars, "archive");
+        }
+        return jars.get(0);
+    }
+
+    private String validateArchive(String path) {
+        if (path == null || !Files.isRegularFile(Path.of(path))) {
+            throw new IllegalArgumentException("archive does not exist: " + path);
+        }
+        return path;
     }
 
     public void start(
-            Boolean useGitDiff,
-            Boolean useIgnoreFile,
-            Boolean simplifyNames
+            boolean useGitDiff,
+            String ignoreFile,
+            boolean simplifyNames
     ) {
-        List<String> ignoredClasses = getIgnoredNames(useIgnoreFile);
+        List<String> ignoredClasses = ignoreFile == null
+                ? List.of()
+                : ignoreUtil.getIgnoredNamesFrom(ignoreFile);
 
         Set<Node> jarNodes;
         if (useGitDiff) {
@@ -93,25 +106,18 @@ public class DependencyAnalyzer {
         );
     }
 
-    private List<String> getIgnoredNames(Boolean useIgnoreFile) {
-        if (useIgnoreFile) {
-            return ignoreUtil.getIgnoredNamesFrom("dependency_class.ignore");
-        } else {
-            return new ArrayList<>();
-        }
-    }
-
     private List<String> getChangedClasses(String branch) {
+        var commits = gitMaster.getCommits(branch);
         return gitMaster.getDiff(
                 branch,
-                ui.select(gitMaster.getCommits(branch)).getHash(),
-                ui.select(gitMaster.getCommits(branch)).getHash()
+                ui.select(commits, "first commit").getHash(),
+                ui.select(commits, "second commit").getHash()
         );
     }
 
     private void jarNodesToConsole(Collection<Node> jarNodes) {
         jarNodes.forEach(it -> {
-                    System.out.printf("Class: %s; In git dif - %s%n", it.getName(), it.getChangedStatus());
+                    System.out.printf("Class: %s; changed in Git diff: %s%n", it.getName(), it.getChangedStatus());
                     it.getDependencies().forEach((key, value) -> {
                                 System.out.printf(
                                         "   dep (%s) types: \n",

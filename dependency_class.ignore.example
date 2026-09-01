@@ -1,0 +1,7 @@
+# Standard library classes
+java.*
+javax.*
+sun.*
+
+# Common generated classes
+*.generated.*

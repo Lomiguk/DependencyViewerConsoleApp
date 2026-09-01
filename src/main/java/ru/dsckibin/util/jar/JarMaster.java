@@ -18,11 +18,10 @@ public class JarMaster {
     private final FileSearch fileSearch = new FileSearch();
 
     public List<String> searchJar(String parentDirectory) {
-        fileSearch.searchFilesInDirectoryByExtensions(
+        return fileSearch.searchFilesInDirectoryByExtensions(
                 new File(parentDirectory),
                 JAVA_ARCHIVE_EXTENSION
         );
-        return fileSearch.getResult();
     }
 
     public Map<String, byte[]> getClassesAsByteArray(String jarPath) {

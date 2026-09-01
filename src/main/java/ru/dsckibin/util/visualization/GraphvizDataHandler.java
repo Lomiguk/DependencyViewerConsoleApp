@@ -1,6 +1,8 @@
-package ru.dsckibin.util.vizualization;
+package ru.dsckibin.util.visualization;
 
-public class GrapvizDataHandler {
+public final class GraphvizDataHandler {
+    private GraphvizDataHandler() {
+    }
     public final static String STYLE = """
                                  fontname="Helvetica,Arial,sans-serif"
                                  node [fontname="Helvetica,Arial,sans-serif"];
@@ -11,6 +13,4 @@ public class GrapvizDataHandler {
                                   "Legend: " [shape=box fontsize=16 label="Green - new; Red - invoke; blue - field; black - method parameter" tooltip="[stackcollapse]"]
                                  }
                         """;
-
-    public final static String SAVE_COMMAND_FORMAT = "dot -Tpng %s.dot -o %s.png";
 }

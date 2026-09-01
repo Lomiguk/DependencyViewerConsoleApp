@@ -5,7 +5,7 @@ import java.util.Map;
 
 public class Node {
     private final String name;
-    private final Boolean isChanged;
+    private final boolean isChanged;
     private final Map<String, Dependency> dependencies = new HashMap<>();
 
     public Node(String name) {
@@ -17,7 +17,7 @@ public class Node {
         return name;
     }
 
-    public Boolean getChangedStatus() {
+    public boolean getChangedStatus() {
         return isChanged;
     }
 
@@ -25,7 +25,7 @@ public class Node {
         return dependencies;
     }
 
-    public Node(String name, Boolean isChanged) {
+    public Node(String name, boolean isChanged) {
         this.name = name;
         this.isChanged = isChanged;
     }
@@ -36,10 +36,9 @@ public class Node {
             return true;
         } else if (!(obj instanceof Node)) {
             return false;
-        } else if (this.name.equals(((Node) obj).name)){
-            return true;
+        } else {
+            return this.name.equals(((Node) obj).name);
         }
-        return super.equals(obj);
     }
 
     @Override

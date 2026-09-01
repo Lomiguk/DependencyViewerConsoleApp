@@ -1,10 +1,11 @@
-package ru.dsckibin.util.vizualization;
+package ru.dsckibin.util.visualization;
 
 import ru.dsckibin.hierarchy.Dependency;
 import ru.dsckibin.hierarchy.Node;
+import ru.dsckibin.hierarchy.TypeOfDependency;
 import ru.dsckibin.util.ClassNameUtil;
 
-import java.util.stream.Collectors;
+import java.util.List;
 
 public class GraphvizDataMapper {
     private final static String EDGE_CLUSTER_FORMAT = """
@@ -35,7 +36,7 @@ public class GraphvizDataMapper {
             Node node,
             String depName,
             Dependency dependency,
-            Boolean simplifyNames
+            boolean simplifyNames
     ) {
         var stringBuilder = new StringBuilder();
         if (dependency.isEmpty()) {
@@ -70,7 +71,13 @@ public class GraphvizDataMapper {
     }
 
     private String dependenciesToColors(Dependency dependency) {
-        return String.join(COLOR_SPLITTER, dependency.keySet().stream()
+        return String.join(COLOR_SPLITTER, List.of(
+                        TypeOfDependency.NEW,
+                        TypeOfDependency.INVOKE,
+                        TypeOfDependency.FIELD,
+                        TypeOfDependency.METHOD_PARAM
+                ).stream()
+                .filter(dependency::containsKey)
                 .map(key -> {
                     String color;
                     switch (key) {
@@ -82,7 +89,7 @@ public class GraphvizDataMapper {
                     }
                     return color;
                 })
-                .collect(Collectors.toSet()));
+                .toList());
     }
 
     private String dependenciesToCountLabel(Dependency dependency) {
@@ -100,7 +107,7 @@ public class GraphvizDataMapper {
         return depCount.toString();
     }
 
-    public String mapJarClass(Node node, Boolean simplifyName) {
+    public String mapJarClass(Node node, boolean simplifyName) {
         return String.format(
                 JAR_CLASS_FORMAT,
                 simplifyName ? classNameUtil.simplifyName(node.getName()) : node.getName(),

@@ -21,15 +21,28 @@ public class ConsoleUiManager {
     }
 
     private <T> T selecting(List<T> objs) {
-        printNumericalList(objs);
-        System.out.print(INPUT_MARKER);
-        int input;
-        try {
-            input = Integer.parseInt(reader.readLine().trim());
-        } catch (IOException e) {
-            throw new RuntimeException(e);
+        if (objs.isEmpty()) {
+            throw new IllegalArgumentException("nothing to select");
         }
-        return objs.get(input);
+        printNumericalList(objs);
+        while (true) {
+            System.out.print(INPUT_MARKER);
+            try {
+                var line = reader.readLine();
+                if (line == null) {
+                    throw new ConsoleReadingException("Console input was closed");
+                }
+                int input = Integer.parseInt(line.trim());
+                if (input >= 0 && input < objs.size()) {
+                    return objs.get(input);
+                }
+            } catch (NumberFormatException ignored) {
+                // The message below is enough for interactive use.
+            } catch (IOException e) {
+                throw new ConsoleReadingException("Failed to read selection");
+            }
+            System.out.printf("Enter a number from 0 to %d.%n", objs.size() - 1);
+        }
     }
 
     private <T> void printNumericalList(List<T> objs) {
@@ -45,7 +58,11 @@ public class ConsoleUiManager {
             System.out.println("Git repo not found");
             System.out.println("Write absolute path to git repository:");
             System.out.print(INPUT_MARKER);
-            return reader.readLine();
+            var path = reader.readLine();
+            if (path == null) {
+                throw new ConsoleReadingException("Console input was closed");
+            }
+            return path;
         } catch (IOException e) {
             throw new ConsoleReadingException("Failed to read path to git repository");
         }

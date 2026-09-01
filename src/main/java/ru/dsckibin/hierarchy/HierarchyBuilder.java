@@ -39,7 +39,7 @@ public class HierarchyBuilder {
             var byteNode = bytesToAsmClassNode(bytes);
             var jarNode = new Node(
                     classNameUtil.prepareClassNameToUse(name),
-                    checkDiffsForContains(diff, byteNode.sourceFile)
+                    checkDiffsForContains(diff, byteNode.name)
             );
             jarNode
                     .addDependencies(getJarClassFieldsAsDependencyNodes(byteNode))
@@ -69,9 +69,18 @@ public class HierarchyBuilder {
         return result;
     }
 
-    private Boolean checkDiffsForContains(Collection<String> diffs, String sourceFile) {
+    private boolean checkDiffsForContains(Collection<String> diffs, String className) {
+        if (className == null) {
+            return false;
+        }
+        var outerClassName = className.contains("$")
+                ? className.substring(0, className.indexOf('$'))
+                : className;
+        var sourcePath = outerClassName + ".java";
         for (var elem : diffs) {
-            if (elem.endsWith(sourceFile)) return true;
+            if (elem.replace('\\', '/').endsWith(sourcePath)) {
+                return true;
+            }
         }
         return false;
     }
